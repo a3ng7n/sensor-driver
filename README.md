@@ -33,6 +33,8 @@ If all is successful, you should see the following:
 
 # Notes
 
+## `SensorDriver` vs `SensorSim`
+
 The structure of the code is broken up into two parts; `drive.cpp` and `sim.cpp`. The classes `SensorDriver` and `SensorSim` within them intentionally look similar.
 They are both composed of an `IOInterface`, some number of `MessageCoder`'s, and a handful of action/accessor functions.
 
@@ -44,6 +46,17 @@ The high level behavior of `SensorSim` comes from the [EPSON G370 IMU](./g370_da
 1. request-response: you send a command, and receive some result, and;
 2. automatic broadcast: the gyro emits data at some prescribed rate
 
-There's a very thin notion of "registers" but there's little-to-no implementation behind them; they're effectively just switch statement cases.
+There's a very thin notion of "registers" but there's little-to-no implementation behind them; they're effectively just switch statement cases. There are lots of other pitfalls and incompletenesses throughout.
 
-There are lots of other pitfalls and incompletenesses throughout.
+## Purpose of `MessageCoder`
+
+Although it doesn't do much in its current state, the intent is to abstract out the frame-level message handling. I'm not happy with how it turned out here, but the desire is to handle cases where even within a single sensor there might be multiple framing schemes.
+In mimicking the EPSON G370 the abstraction works, but from past experience it can be dubious with other message schemes; this wouldn't extend well to cases where we need to have retries, error correcting, or even just frame/packet-spanning data.
+
+Note: I'm realizing I'm using the word frame here a lot - this could just as easily go for "packets" as well.
+
+On the whole: there's lots of pitfalls here, and I'd want to spend a decent amount of time figuring this out correctly.
+
+## IOInterface
+
+Similar to `MessageCoder` the intend was to decouple/abstract some of the functions interacting with the hardware. Partially to more easily support different io schemes (e.g. SPI), and partially to make mocking/spoofing easier. In theory there'd be multiple `IOInterfaces`'s', one for SPI, one for unit testing, which we'd link-time incorporate.
