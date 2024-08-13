@@ -28,10 +28,10 @@ public:
   // gets the device's version information
   uint8_t getVersion();
 
-  // generic register writing
+  // NOT IMPLEMENTED: generic register writing
   bool writeRegister(uint8_t addr, uint8_t value);
 
-  // generic register reading
+  // NOT IMPLEMENTED: generic register reading
   uint8_t sendRegisterRead(uint8_t addr);
 
   // sets the device to be in `mode`

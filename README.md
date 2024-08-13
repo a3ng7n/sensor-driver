@@ -1,22 +1,34 @@
 # sensor-driver
 
-# Pre-reqs
+# Requirements
+
+You'll need g++, make, and socat - install them as follows:
 
 `sudo apt install g++ make socat`
 
-# compiling
+# Compiling
 
-- `make clean` / `make distclean`
-- `make`
+From the root of the repo, run the following:
 
-# running
+1. `make distclean`
+2. `make`
+
+# Running
+
+In three separate terminals, run the following:
 
 1. `socat PTY,link=/tmp/ttyDRIVER,raw,echo=0 PTY,link=/tmp/ttySIM,raw,echo=0`
-2. (in another terminal) `./bin/sim`
-3. (in another terminal) `./bin/run_driver`
+   Note: there shouldn't be any permissions issues running this - if there are, I don't think running the rest with sudo will work.
+2. `./bin/sim`
+   Note: nothing should appear until running `./bin/run_driver`
+3. `./bin/run_driver`
+   Note: should quickly print out "getMode: ..." and "getVersion: ..." among other messages, and then return successfully.
+
+Note: `./bin/sim` needs to be run before `./bin/run_driver` since the driver does some blocking reads - if they're run out of order, simply ctrl+c the `run_driver` and re-run it - the `sim` should behave nicely if kept running.
 
 # result
 
+If all is successful, you should see the following:
 ![example output](./output.png)
 
 # Notes
@@ -33,3 +45,5 @@ The high level behavior of `SensorSim` comes from the [EPSON G370 IMU](./g370_da
 2. automatic broadcast: the gyro emits data at some prescribed rate
 
 There's a very thin notion of "registers" but there's little-to-no implementation behind them; they're effectively just switch statement cases.
+
+There are lots of other pitfalls and incompletenesses throughout.

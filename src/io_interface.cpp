@@ -71,6 +71,13 @@ void IOInterface::flush() {
 }
 
 void IOInterface::configurePort(int baud_rate) {
+  // I'll be honest that I hacked these settings together here.
+  // I consider myself fairly familar with messaging standards (like UART), so I
+  // understand the fundamentals of control bits, stop bits, baud rate, etc. But
+  // I just haven't had much experience interfacing with uarts from unix c. If I
+  // had more time I'd spend it coming up to speed on how unix general terminal
+  // interfaces are described, and how termios settings work.
+
   struct termios tty;
 
   // read in state of fd into a `termios` struct

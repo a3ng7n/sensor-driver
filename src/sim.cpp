@@ -36,6 +36,12 @@ void SensorSim::init() { io_interface_.init(); }
 void SensorSim::shutdown() { io_interface_.shutdown(); }
 
 void SensorSim::processInput() {
+  // this is somewhat similar to the SensorDriver::receiveX() functions
+  // although it's a little easier since we only need to receive one type of
+  // data (CommandRaw_t's).
+  // And yeah, this is all pretty hacky, and likely not
+  // performant - I'm admittedly pretty weak in this area.
+
   uint8_t cmd_frame_len;
   int bytes_avail;
 
@@ -44,17 +50,24 @@ void SensorSim::processInput() {
     return;
   }
 
-  // append received bytes to internal byte buffer
+  // append received bytes to an internal byte buffer, which is used
+  // in case we get a partial message on a cycle
   std::vector<uint8_t> rxBytes = io_interface_.receive(bytes_avail);
   rx_.insert(rx_.end(), rxBytes.begin(), rxBytes.end());
 
-  // no enough data available - do nothing and move on
+  // no *enough* data available - do nothing and move on
   if (rx_.size() < (cmd_frame_len = command_message_coder_.getFrameLength())) {
     return;
   }
 
+  // Parse stream of bytes into a set of commands, if any are found
+  // Note: `deFrame` consumes `rx_` in the process - there's likely a better way
+  // but I just wanted to keep the edge-case logic to a minimum for parsing.
   std::vector<CommandRaw_t> cmds = command_message_coder_.deFrame(rx_);
 
+  // Add each command to the internal commands queue - I think I could do this
+  // with an in-place `insert`, but I ran out of time and wanted to do it this
+  // way for readability
   for (auto &cmd : cmds) {
     printMessage(cmd);
     commands_.insert(commands_.begin(), cmd);
@@ -62,6 +75,8 @@ void SensorSim::processInput() {
 }
 
 void SensorSim::processCommands() {
+  // using a deque here just for readability - dispatch the commands in the
+  // order they came in
   while (commands_.size() > 0) {
     auto &cmd = *commands_.begin();
     dispatchCommand(cmd);
@@ -70,6 +85,10 @@ void SensorSim::processCommands() {
 }
 
 void SensorSim::dispatchCommand(CommandRaw_t &cmd) {
+  // big switch statement to handle all of the command types
+  // The commands really should be an enum, but I got a bit strapped for time
+  // and figured in place of a refactor I could just explain myself.
+
   switch (cmd.addr) {
   case DATA_GET_REG:
     data_responses_.push_back(DataResponseRaw_t{.addr = DATA_GET_REG,
@@ -94,6 +113,8 @@ void SensorSim::dispatchCommand(CommandRaw_t &cmd) {
         ResponseRaw_t{.addr = MODE_GET_REG, .data = mode_, .delim = DELIM});
     return;
   default:
+    // we could error here, but I figured the real imu wouldn't crash in this
+    // case
     std::cout << "command not found: " << std::hex << (int)cmd.addr
               << std::endl;
     return;
@@ -126,6 +147,11 @@ void SensorSim::issueResponse(DataResponseRaw_t &resp) {
 }
 
 void SensorSim::processMode() {
+  // intent is to run any *automatic* things per-mode.
+  // Again, just a hack to show the behavior. With more time the proper way
+  // to handle actions within modes is to emulate the state/transition diagram
+  // for the given device.
+
   switch (mode_) {
   case MODE_ARG_AUTO:
     data_responses_.push_back(DataResponseRaw_t{.addr = DATA_GET_REG,
@@ -161,17 +187,29 @@ void SensorSim::getTruth() {
 };
 
 void SensorSim::run() {
+  // every "cycle" loop through the standard set of tasks
   while (1) {
     getTruth();
 
     processMode();
 
+    // retrieve bytes from uart, and deframe them as commands
+    // this should be non-blocking, intentionally
     processInput();
 
     processCommands();
 
     processResponses();
 
+    // the time-cycling of this is very poorly done - totally understood that
+    // this loop will take longer than `rate_micro`, and it won't be consistent.
+    // The proper way to do this is one of:
+    // a.) rearchitect the input to be event-driven - which I think makes the
+    // state/mode logic more complicated, or;
+    // b.) run this asyncronously, or calculate some `wait_until` here, or;
+    // c.) run this loop off of an interrupt
+    //
+    // there are probably others, and I'm far from an expert on all the choices
     usleep(rate_micro);
   }
 }
