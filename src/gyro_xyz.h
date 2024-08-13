@@ -13,4 +13,4 @@ const uint8_t MODE_ARG_MANUAL = 0x01;
 const uint8_t MODE_ARG_CONFIG = 0x02;
 // there could also be another "burst"-like mode here
 // where the "response" format includes multiple
-// data fields
+// data fields - but skipping that to save time
