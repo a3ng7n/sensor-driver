@@ -18,10 +18,15 @@ From the root of the repo, run the following:
 In three separate terminals, run the following:
 
 1. `socat PTY,link=/tmp/ttyDRIVER,raw,echo=0 PTY,link=/tmp/ttySIM,raw,echo=0`
+
    Note: there shouldn't be any permissions issues running this - if there are, I don't think running the rest with sudo will work.
+
 2. `./bin/sim`
+
    Note: nothing should appear until running `./bin/run_driver`
+
 3. `./bin/run_driver`
+
    Note: should quickly print out "getMode: ..." and "getVersion: ..." among other messages, and then return successfully.
 
 Note: `./bin/sim` needs to be run before `./bin/run_driver` since the driver does some blocking reads - if they're run out of order, simply ctrl+c the `run_driver` and re-run it - the `sim` should behave nicely if kept running.
