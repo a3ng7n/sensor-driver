@@ -33,9 +33,17 @@ If all is successful, you should see the following:
 
 # Notes
 
+## Entrypoints
+
+There are two main entrypoints:
+
+- `run_driver.cpp`: initializes a `SensorDriver` and does some example traffic
+- `sim.cpp`: initializes a `SensorSim` and leaves it running.
+  Note: this file also has the implementation for the `SensorSim` class, which I realize is a little confusing. Apologies.
+
 ## `SensorDriver` vs `SensorSim`
 
-The structure of the code is broken up into two parts; `drive.cpp` and `sim.cpp`. The classes `SensorDriver` and `SensorSim` within them intentionally look similar.
+The structure of the code is broken up into two parts; `driver.cpp` and `sim.cpp`. The classes `SensorDriver` and `SensorSim` within them intentionally look similar.
 They are both composed of an `IOInterface`, some number of `MessageCoder`'s, and a handful of action/accessor functions.
 
 The functions within `SensorDriver` are fairly low-level, but are _mostly_ stateless. The intent would be some state-knowlegable application is instantiates/controls/uses `SensorDriver`.
