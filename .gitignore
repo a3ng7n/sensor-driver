@@ -1,2 +1,5 @@
 .depend
-bin/
+/bin
+
+/target
+/rust/target
